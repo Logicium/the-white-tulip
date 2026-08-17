@@ -1,32 +1,187 @@
 {
-  "_note": "This file is overwritten by the Apotome provisioning service during site generation. Edit your live content from /admin.",
+  "_generated": "2026-08-17T23:27:59.607Z",
   "archetype": "hearth",
-  "brand": "The Hearth Hotel",
-  "tagline": "A Place to Rest & Restore",
-  "blurb": "Boutique rooms and genuine hospitality in the heart of town.",
-  "theme": "earth",
-  "swatch": "default",
-  "variant": "classic",
+  "brand": "The White Tulip",
+  "tagline": "Dorms, private rooms, free Wi-Fi, 24-hour reception and guest discounts at Sláinte Irish Pub.",
+  "blurb": "Whether you are travelling solo, with friends or as a group, White Tulip Hostel offers affordable accommodation in central Amsterdam. ",
+  "theme": "studio",
+  "swatch": "onyx-dark",
+  "variant": "essentials",
   "contact": {
-    "address": "456 Commerce St, Trinidad, CO 81082",
-    "phone": "(719) 555-0200",
-    "email": "stay@example.com",
+    "address": "123 Fake Street",
+    "phone": "9407651403",
+    "email": "zackleejohnston@gmail.com",
     "mapEmbedUrl": ""
   },
-  "photos": {
-    "hero": { "src": "/images/hero.jpg", "alt": "Hotel exterior" },
-    "about": { "src": "/images/about.jpg", "alt": "Lobby" },
-    "rooms": [],
-    "gallery": []
-  },
   "story": {
-    "title": "Our Story",
-    "paragraphs": ["A boutique hotel with a century of character."],
-    "facts": []
+    "title": "Why stay at White Tulip Hostel?",
+    "paragraphs": [
+      "Central location in Amsterdam city centre\n5-minute walk from Amsterdam Central Station and Dam Square\nDorms and private rooms for budget travellers\nFree Wi-Fi throughout the hostel\n24-hour reception and helpful staff\nGuest discounts at Sláinte Irish Pub\nIdeal for backpackers, solo travellers, groups and weekend trips",
+      "Looking for a budget hostel in Amsterdam city centre? White Tulip Hostel is a practical base for dorms, private rooms, nightlife, sightseeing and direct booking."
+    ],
+    "facts": [
+      {
+        "label": "Founded",
+        "value": "2019"
+      },
+      {
+        "label": "Summoned",
+        "value": "2021"
+      },
+      {
+        "label": "",
+        "value": ""
+      }
+    ]
   },
-  "rooms": [],
-  "amenities": [],
-  "testimonials": [],
-  "bookingUrl": "",
-  "social": []
+  "testimonials": [
+    {
+      "quote": "Amazing!",
+      "author": "Dave R. ",
+      "source": "Somewhere in CO"
+    },
+    {
+      "quote": "I need this everyday!",
+      "author": "Marty T.",
+      "source": "allegedly still there"
+    },
+    {
+      "quote": "I love Big Momma!",
+      "author": "Kevin B. ",
+      "source": "reformed"
+    }
+  ],
+  "social": [
+    {
+      "label": "Instagram",
+      "href": "https://www.instagram.com/choppermountain/"
+    },
+    {
+      "label": "Facebook",
+      "href": ""
+    }
+  ],
+  "photos": {
+    "hero": {
+      "src": "/photos/hero.jpg",
+      "alt": "",
+      "caption": ""
+    },
+    "about": {
+      "src": "/photos/about.jpg",
+      "alt": "",
+      "caption": ""
+    },
+    "rooms": [
+      {
+        "src": "/photos/room-suite.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/room-king.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/room-queen.jpg",
+        "alt": "",
+        "caption": ""
+      }
+    ],
+    "gallery": [
+      {
+        "src": "/photos/gallery-01.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/gallery-02.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/gallery-03.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/gallery-04.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/gallery-05.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/gallery-06.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/gallery-07.jpg",
+        "alt": "",
+        "caption": ""
+      },
+      {
+        "src": "/photos/gallery-08.jpg",
+        "alt": "",
+        "caption": ""
+      }
+    ]
+  },
+  "rooms": [
+    {
+      "name": "Dorm Rooms",
+      "blurb": "Our dorm rooms  are a practical choice for backpackers, solo travellers and friends who want to stay centrally and meet other travellers. Dorm beds help keep your trip affordable while placing you within walking distance of major sights, nightlife and transport links.",
+      "image": "/photos/room-suite.jpg",
+      "features": [],
+      "rateFrom": "$75",
+      "bookUrl": ""
+    },
+    {
+      "name": "Mixed dormitory rooms",
+      "blurb": "Mixed dormitory rooms are available in different sizes, including smaller dorm options such as 4-bed dorm rooms when available. These rooms are ideal if you want a social hostel atmosphere in Amsterdam city centre with easy access to the Red Light District and Central Station.",
+      "image": "/photos/room-king.jpg",
+      "features": [],
+      "rateFrom": "$75",
+      "bookUrl": ""
+    },
+    {
+      "name": "Private and double hostel rooms",
+      "blurb": "Prefer more privacy? The White Tulip Hostel also offers private and double hostel room options, including standard double rooms when available. These rooms suit couples, friends or travellers who want a private base while still enjoying the location and atmosphere of a central Amsterdam hostel.  Guests can use free Wi-Fi throughout the hostel, and lockers are available for storing personal items. We recommend bringing your own padlock. Our reception team is available 24 hours a day to help with directions, local tips, check-in questions and practical information about your stay.  Staying at White Tulip Hostel also means you are close to Sláinte Irish Pub, located below the hostel. It is a convenient place to meet other travellers, enjoy food and drinks, or relax after a day of sightseeing. Learn more about The White Tulip Hostel or contact us before booking.",
+      "image": "/photos/room-queen.jpg",
+      "features": [
+        "Double bed",
+        "Sleeps 2"
+      ],
+      "rateFrom": "$200",
+      "bookUrl": ""
+    }
+  ],
+  "amenities": [
+    {
+      "label": "",
+      "description": "",
+      "icon": "AlignHorizontalDistributeCenter"
+    },
+    {
+      "label": "",
+      "description": "",
+      "icon": "Wifi"
+    },
+    {
+      "label": "",
+      "description": "",
+      "icon": "AlarmSmoke"
+    },
+    {
+      "label": "",
+      "description": "",
+      "icon": "AArrowDown"
+    }
+  ],
+  "bookingUrl": "https://hotels.cloudbeds.com/en/reservation/evYMiX?currency=eur"
 }
