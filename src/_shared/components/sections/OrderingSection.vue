@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { type MenuItemDTO } from '../../platform/contentClient'
+import { contentClient, type MealOrderDTO, type MenuItemDTO } from '../../platform/contentClient'
+import { groupByBase, type SizedEntry } from '../../platform/menuSizes'
 import { apiClient } from '../../platform/apiClient'
 import { PLATFORM_SLUG, DEMO_MODE } from '../../platform/config'
 import DemoBadge from '../DemoBadge.vue'
@@ -36,7 +37,7 @@ const form = reactive({
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 
-interface Confirmed { id: string; pickupAt: string; totalCents: number; currency: string }
+interface Confirmed { id: string; pickupAt: string; totalCents: number; currency: string; paid: boolean }
 const confirmed = ref<Confirmed | null>(null)
 
 function money(cents: number, code = currency.value): string {
@@ -183,6 +184,15 @@ function itemById(id: string) { return items.value.find(i => i.id === id) }
 function itemsInCategory(cat: string) {
   return items.value.filter(i => (i.category || '') === cat)
 }
+/** Kitchens model sizes as separate items ("Pepperoni 12\"", "Pepperoni 16\"");
+    render those as ONE dish with a size button each. Every button still adds
+    its own real menu item, so pricing, checkout and tickets are unchanged. */
+function entriesInCategory(cat: string): Array<SizedEntry<MenuItemDTO>> {
+  return groupByBase(itemsInCategory(cat), i => i.name)
+}
+function sizedDescription(e: SizedEntry<MenuItemDTO>): string | undefined {
+  return e.kind === 'sized' ? e.variants.map(v => v.item.description).find(Boolean) : undefined
+}
 
 function add(item: MenuItemDTO) {
   const existing = cart.value.find(l => l.menuItemId === item.id)
@@ -201,12 +211,16 @@ const totalCents = computed(() =>
   cart.value.reduce((sum, l) => sum + ((itemById(l.menuItemId)?.priceCents ?? 0) * l.quantity), 0),
 )
 
+function remember(o: MealOrderDTO) {
+  confirmed.value = { id: o.id, pickupAt: o.pickupAt, totalCents: o.totalCents, currency: o.currency, paid: o.paymentStatus === 'paid' }
+}
+
 async function checkout() {
   if (!cart.value.length || !form.pickupAt) return
   submitting.value = true
   submitError.value = null
   try {
-    const res = await apiClient.orderingCreateOrder({
+    const payload = {
       siteSlug: slug.value,
       name: form.name.trim(),
       email: form.email.trim(),
@@ -214,8 +228,22 @@ async function checkout() {
       notes: form.notes.trim() || undefined,
       pickupAt: form.pickupAt,
       items: cart.value.map(l => ({ menuItemId: l.menuItemId, quantity: l.quantity, notes: l.notes })),
-    })
-    confirmed.value = { id: res.id, pickupAt: res.pickupAt, totalCents: res.totalCents, currency: res.currency }
+    }
+
+    // Live sites route through Stripe Checkout (destination charge to the
+    // owner). Demo mode has no backend session, so it places the order
+    // directly and shows the simulated confirmation.
+    if (!DEMO_MODE) {
+      const res = await contentClient.orderingCheckout({ ...payload, returnPath: window.location.pathname })
+      if (res.checkoutUrl) {
+        window.location.href = res.checkoutUrl
+        return
+      }
+      // Pay at pickup — owner not payment-onboarded, or online payment is off.
+      remember(res.order)
+    } else {
+      remember(await apiClient.orderingCreateOrder(payload))
+    }
     cart.value = []
     cartOpen.value = false
     await load()
@@ -235,7 +263,29 @@ function reset() {
   form.pickupAt = ''
 }
 
-onMounted(load)
+/** After returning from Stripe Checkout, verify payment and show confirmation. */
+async function handleCheckoutReturn() {
+  if (DEMO_MODE) return
+  const params = new URLSearchParams(window.location.search)
+  const orderId = params.get('order')
+  const status = params.get('status')
+  if (!orderId) return
+  if (status === 'success') {
+    try {
+      remember(await contentClient.orderingConfirmOrder(orderId))
+    } catch { /* leave the menu as-is if confirmation fails */ }
+  } else if (status === 'cancelled') {
+    submitError.value = 'Payment was cancelled. Your order was not placed.'
+    cartOpen.value = true
+  }
+  // Strip the query so a refresh doesn't re-confirm.
+  window.history.replaceState({}, '', window.location.pathname)
+}
+
+onMounted(async () => {
+  await load()
+  await handleCheckoutReturn()
+})
 </script>
 
 <template>
@@ -252,7 +302,7 @@ onMounted(load)
         <div class="ap-ordering__confirmation-icon" aria-hidden="true">✓</div>
         <h3>Order received.</h3>
         <p>Pickup at <strong>{{ formatSlot(confirmed.pickupAt) }}</strong></p>
-        <p>Total: <strong>{{ money(confirmed.totalCents, confirmed.currency) }}</strong></p>
+        <p>Total: <strong>{{ money(confirmed.totalCents, confirmed.currency) }}</strong> · {{ confirmed.paid ? 'Paid' : 'Pay at pickup' }}</p>
         <p class="ap-ordering__hint">We emailed you a copy. See you soon.</p>
         <button type="button" class="ap-btn ap-btn--ghost" @click="reset">Order again</button>
       </div>
@@ -266,13 +316,35 @@ onMounted(load)
           <div v-for="cat in categories" :key="cat || '_all'" class="ap-ordering__cat">
             <h3 v-if="cat" class="ap-ordering__cat-title">{{ cat }}</h3>
             <ul class="ap-ordering__items">
-              <li v-for="i in itemsInCategory(cat)" :key="i.id" class="ap-ordering__item">
-                <div class="ap-ordering__item-body">
-                  <h4>{{ i.name }}</h4>
-                  <p v-if="i.description" class="ap-ordering__item-desc">{{ i.description }}</p>
-                  <span class="ap-ordering__item-price">{{ money(i.priceCents, i.currency) }}</span>
-                </div>
-                <button type="button" class="ap-btn ap-btn--sm" @click="add(i)">Add</button>
+              <li
+                v-for="e in entriesInCategory(cat)"
+                :key="e.kind === 'single' ? e.item.id : e.base"
+                class="ap-ordering__item"
+              >
+                <template v-if="e.kind === 'single'">
+                  <div class="ap-ordering__item-body">
+                    <h4>{{ e.item.name }}</h4>
+                    <p v-if="e.item.description" class="ap-ordering__item-desc">{{ e.item.description }}</p>
+                    <span class="ap-ordering__item-price">{{ money(e.item.priceCents, e.item.currency) }}</span>
+                  </div>
+                  <button type="button" class="ap-btn ap-btn--sm" @click="add(e.item)">Add</button>
+                </template>
+                <template v-else>
+                  <div class="ap-ordering__item-body">
+                    <h4>{{ e.base }}</h4>
+                    <p v-if="sizedDescription(e)" class="ap-ordering__item-desc">{{ sizedDescription(e) }}</p>
+                    <div class="ap-ordering__sizes">
+                      <button
+                        v-for="v in e.variants" :key="v.item.id" type="button"
+                        class="ap-ordering__size"
+                        @click="add(v.item)"
+                      >
+                        {{ v.label }}
+                        <span class="ap-ordering__size-price">{{ money(v.item.priceCents, v.item.currency) }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </template>
               </li>
             </ul>
           </div>
@@ -427,6 +499,20 @@ onMounted(load)
 .ap-ordering__item-body h4 { margin: 0; font-size: 1rem; }
 .ap-ordering__item-desc { margin: 0; color: var(--ap-ink-muted); font-size: 0.88rem; }
 .ap-ordering__item-price { font-weight: 600; font-size: 0.95rem; }
+/* Size buttons on a grouped dish: each one is its own "Add" */
+.ap-ordering__sizes { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+.ap-ordering__size {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--ap-line);
+  border-radius: 999px;
+  background: transparent; color: var(--ap-ink);
+  font: inherit; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.ap-ordering__size:hover { border-color: var(--ap-primary); background: color-mix(in srgb, var(--ap-primary) 8%, transparent); }
+.ap-ordering__size-price { font-weight: 500; color: var(--ap-ink-muted); font-size: 0.78rem; }
 .ap-ordering__cart-fab {
   position: fixed;
   right: 1.25rem; bottom: 1.25rem;
